@@ -80,6 +80,9 @@ class Dataset:
 
         # Sample
         if self.num_samples is not None:
-            train_combined = train_combined.sample(self.num_samples, random_state=self.random_seed)        
+            train_combined = train_combined.sample(self.num_samples, random_state=self.random_seed)   
+
+        print('Hello World')     
 
         return train_combined, test_combined, labels
+    
