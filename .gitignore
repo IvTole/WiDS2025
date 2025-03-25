@@ -5,5 +5,5 @@
 /data/TRAIN
 **/__pycache__
 **/.DS_Store
-mlruns/203651764970985176/
-mlruns/models/
+**/mlruns/*
+!**/mlruns/.gitkeep
