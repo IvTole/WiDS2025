@@ -94,3 +94,67 @@ Cada estudiante debe elegir (o se le asignará) una tarea para contribuir a la m
 13. **Evaluación el Impacto del Preprocesamiento en el Desempeño del Modelo**  
    Comparar distintos pipelines de preprocesamiento (por ejemplo, con o sin escalado, distintas imputaciones o codificaciones) y registrar cómo cambia el desempeño del modelo (F1, accuracy, etc.). Documentar resultados en CSV y MLflow.
 
+# Git Usage Rules for the Development Project
+To ensure an organized and efficient workflow, all students must follow these Git usage guidelines when contributing to the project:
+
+1. **Branching Strategy**
++ Each student must create a personal branch following the naming convention:
+  
+    `feature/<last_name>` (all lowercase).
+    Example: `feature/smith`
+2. **Committing Changes**
++ Commit your work regularly to keep track of progress.
++ Avoid committing all your changes in a single commit—break them down into meaningful commits.
++ Write clear and descriptive commit messages that explain what was changed.
+
+3. **Merging with the `main` Branch**
++ Before submitting a pull request, merge the latest `main` branch into your branch to ensure you have the most up-to-date code.
++ This step prevents conflicts and avoids unintentionally removing changes made by other students.
++ Resolve any merge conflicts locally before pushing your changes. Do not push unresolved conflicts.
++ Always test your code after merging to ensure everything works correctly.
+
+4. **Pull Request**
++ You may submit as many pull requests as needed.
++ Each pull request should be well-documented, explaining the changes and their purpose.
++ Review your code before submitting a pull request to ensure it meets project standards.
+
+## Visual Example of Git Workflow
+The following diagram illustrates the Git workflow for different students:
+
+```mermaid
+   gitGraph
+      commit
+      commit
+      commit
+      branch feature/student_1
+      branch feature/student_2
+      checkout feature/student_1
+      commit
+      commit
+      commit
+      commit
+      checkout main
+      merge feature/student_1
+      checkout feature/student_2
+      commit
+      commit
+      commit
+      merge main id: "conflicts resolution"
+      checkout main
+      merge feature/student_2
+      checkout feature/student_2
+      commit
+      commit
+      checkout main
+      merge feature/student_2
+      branch feature/student_3
+      checkout feature/student_3
+      commit
+      commit
+```
+1. `student_1` (Yellow) had the easiest scenario since they were the first to merge into `main`.
+2. `student_2` (Green) had to fetch the latest `main` changes and resolve merge conflicts before merging their branch.
+3. `student_2` (Green) also submitted more than one pull requests, this is allowed.
+4. `student_3` (Blue) started their work later. This is not an issue, but they must still follow the process of keeping their branch updated with `main`.
+
+By following these guidelines and learning from the example above, we can ensure a smooth and structured collaboration process.
