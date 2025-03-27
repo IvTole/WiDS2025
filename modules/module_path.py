@@ -16,6 +16,22 @@ def train_data_path() -> Path:
             return data_folder
         else:
             raise Exception("Data not found")
+
+def train_data_new_path() -> Path:
+    """
+    Returns the location of train data directory, allowing for script executions in subfolders without worrying about the
+    relative location of the data
+
+    :return: the path to the train data directory
+    """
+    cwd = Path("..")
+    for folder in (cwd, cwd / "..", cwd / ".." / ".."):
+        data_folder = folder / "data/TRAIN_NEW"
+        if data_folder.exists() and data_folder.is_dir():
+            print("Train data directory found in ", data_folder)
+            return data_folder
+        else:
+            raise Exception("Data not found")
         
 def test_data_path() -> Path:
     """
