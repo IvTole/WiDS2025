@@ -3,6 +3,8 @@
 /data/widsdatathon2025.zip
 /data/TEST
 /data/TRAIN
+/data/TRAIN_OLD
+/data/TRAIN_NEW
 **/__pycache__
 **/.DS_Store
 **/mlruns/*
