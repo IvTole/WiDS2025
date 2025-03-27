@@ -7,7 +7,7 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.compose import ColumnTransformer
 
 # External libraries
-from module_path import train_data_path, test_data_path
+from module_path import train_data_path, test_data_path, train_data_new_path
 
 COL_EHQ_EHQ_TOTAL = "EHQ_EHQ_Total"
 COL_COLORVISION_CV_SCORE = "ColorVision_CV_Score"
@@ -84,8 +84,6 @@ class Dataset:
         # Sample
         if self.num_samples is not None:
             train_combined = train_combined.sample(self.num_samples, random_state=self.random_seed)   
-
-        print('Hello World')     
 
         return train_combined, test_combined, labels
     
