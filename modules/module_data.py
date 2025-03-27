@@ -57,10 +57,13 @@ class Dataset:
         """
 
         train_path = train_data_path()
+        train_new_path = train_data_new_path()
         test_path = test_data_path()
         
         train_q = pd.read_excel(os.path.join(train_path,"TRAIN_QUANTITATIVE_METADATA.xlsx"))
         train_c = pd.read_excel(os.path.join(train_path,"TRAIN_CATEGORICAL_METADATA.xlsx"))
+        train_new_q = pd.read_excel(os.path.join(train_new_path,"TRAIN_QUANTITATIVE_METADATA_new.xlsx"))
+        train_new_c = pd.read_excel(os.path.join(train_new_path,"TRAIN_CATEGORICAL_METADATA_new.xlsx"))
         test_q = pd.read_excel(os.path.join(test_path,"TEST_QUANTITATIVE_METADATA.xlsx"))
         test_c = pd.read_excel(os.path.join(test_path,"TEST_CATEGORICAL.xlsx"))
 
