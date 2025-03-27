@@ -10,7 +10,7 @@ def train_data_path() -> Path:
     """
     cwd = Path("..")
     for folder in (cwd, cwd / "..", cwd / ".." / ".."):
-        data_folder = folder / "data/TRAIN"
+        data_folder = folder / "data/TRAIN_OLD"
         if data_folder.exists() and data_folder.is_dir():
             print("Train data directory found in ", data_folder)
             return data_folder
