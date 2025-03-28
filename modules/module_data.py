@@ -68,25 +68,26 @@ class Dataset:
         test_c = pd.read_excel(os.path.join(test_path,"TEST_CATEGORICAL.xlsx"))
 
         train_combined = pd.merge(train_q, train_c, on="participant_id", how="left").set_index("participant_id")
-        train_new_combined = pd.merge(train_new_q, train_new_c, on="participant_id", how="left").set_index("participant_id")
+        train_new_combined = pd.merge(train_new_q, train_new_c, on="participant_id", how="left").set_index("participant_id").sort_index()
         test_combined = pd.merge(test_q, test_c, on="participant_id", how="left").set_index("participant_id")
 
-        labels = pd.read_excel(os.path.join(train_path,"TRAINING_SOLUTIONS.xlsx")).set_index("participant_id")
-        assert all(train_combined.index == labels.index), "Label IDs don't match train IDs"
+        labels = pd.read_excel(os.path.join(train_new_path,"TRAINING_SOLUTIONS.xlsx")).set_index("participant_id").sort_index()
+        assert all(train_new_combined.index == labels.index), "Label IDs don't match train IDs"
 
         # drop columns (cause missing values)
         drop_cols = [COL_MRI_TRACK_AGE_AT_SCAN, COL_PREINT_DEMOS_FAM_CHILD_ETHNICITY]
-        train_combined.drop(drop_cols, axis=1, inplace=True)
+        train_new_combined.drop(drop_cols, axis=1, inplace=True)
         test_combined.drop(drop_cols, axis=1, inplace=True)
 
         # impute missing values
         test_combined.fillna(test_combined.median(numeric_only=True), inplace=True)
+        train_new_combined.fillna(train_new_combined.median(numeric_only=True), inplace=True)
 
         # Sample
         if self.num_samples is not None:
-            train_combined = train_combined.sample(self.num_samples, random_state=self.random_seed)   
+            train_new_combined = train_new_combined.sample(self.num_samples, random_state=self.random_seed)   
 
         print('Hello World')     
 
-        return train_combined, test_combined, labels
+        return train_new_combined, test_combined, labels
     
