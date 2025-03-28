@@ -7,7 +7,7 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.compose import ColumnTransformer
 
 # External libraries
-from module_path import train_data_path, test_data_path
+from module_path import train_data_path, test_data_path, train_data_new_path
 
 COL_EHQ_EHQ_TOTAL = "EHQ_EHQ_Total"
 COL_COLORVISION_CV_SCORE = "ColorVision_CV_Score"
@@ -68,6 +68,7 @@ class Dataset:
         test_c = pd.read_excel(os.path.join(test_path,"TEST_CATEGORICAL.xlsx"))
 
         train_combined = pd.merge(train_q, train_c, on="participant_id", how="left").set_index("participant_id")
+        train_new_combined = pd.merge(train_new_q, train_new_c, on="participant_id", how="left").set_index("participant_id")
         test_combined = pd.merge(test_q, test_c, on="participant_id", how="left").set_index("participant_id")
 
         labels = pd.read_excel(os.path.join(train_path,"TRAINING_SOLUTIONS.xlsx")).set_index("participant_id")
