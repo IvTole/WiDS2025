@@ -84,7 +84,9 @@ class ModelSubmission:
     Supports the submission of a model using mlflow, using a dataset
     """
 
-    def __init__(self, X: pd.DataFrame, version: int=1, threshold: float = 0.5):
+    def __init__(self, X: pd.DataFrame, version: int=1, threshold: float = 0.5, 
+                 adhd_tag: str = "adhd", sex_f_tag: str = "sex_f"
+        ):
         """
         :param X: the inputs of the test dataset
         :param version: version of the registered model
@@ -94,6 +96,8 @@ class ModelSubmission:
         self.X = X
         self.version = version
         self.threshold = threshold
+        self.sex_f_tag = sex_f_tag
+        self.adhd_tag = adhd_tag
 
     def load_model(self):
         """
@@ -102,8 +106,8 @@ class ModelSubmission:
 
         mlflow.set_tracking_uri(mlruns_data_path())
 
-        model_sex_f = mlflow.sklearn.load_model(f"models:/Model_sex_f/{self.version}")
-        model_adhd = mlflow.sklearn.load_model(f"models:/Model_adhd/{self.version}")
+        model_sex_f = mlflow.sklearn.load_model(f"models:/Model_{self.sex_f_tag}/{self.version}")
+        model_adhd = mlflow.sklearn.load_model(f"models:/Model_{self.adhd_tag}/{self.version}")
 
         return model_sex_f, model_adhd
     
