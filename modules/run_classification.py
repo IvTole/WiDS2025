@@ -37,5 +37,29 @@ def main():
     sub = ModelSubmission(X=df_test, version=1, threshold=0.5, adhd_tag="adhd", sex_f_tag="sex_f")
     sub.to_submission(output_name='submission.csv')
 
+    # Train and evaluate RandomForest for adhd
+    rf_adhd = ModelEvaluation(X=df_train, y=labels[targets[0]], tag='rf_adhd')
+    rf_adhd.evaluate_model(RandomForestClassifier(
+        n_estimators=1000,
+        criterion="gini",
+        max_depth=10,
+        random_state=42,
+        bootstrap=True,
+    ))
+
+    # Train and evaluate RandomForest for sex_f
+    rf_sex_f = ModelEvaluation(X=df_train, y=labels[targets[0]], tag='rf_sex_f')
+    rf_sex_f.evaluate_model(RandomForestClassifier(
+        n_estimators=100,
+        criterion="gini",
+        max_depth=10,
+        random_state=42,
+        bootstrap=True,
+    ))
+
+    # prediction with test dataset
+    sub = ModelSubmission(X=df_test, version=1, threshold=0.5, adhd_tag="rf_adhd", sex_f_tag="rf_sex_f")
+    sub.to_submission(output_name='submission_rf.csv')
+
 if __name__ == '__main__':
     main()
