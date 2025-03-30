@@ -21,7 +21,7 @@ def main():
     print("Start date & time : ", start_datetime)
 
     df = Dataset()
-    df_train, df_test, labels = df.load_data_frame() # train dataframe, test dataframe, y targets dataframe
+    df_train, df_test, labels = df.load_data_frame(fill_na=True) # train dataframe, test dataframe, y targets dataframe
 
     targets = ['ADHD_Outcome',  'Sex_F']
 

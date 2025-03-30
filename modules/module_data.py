@@ -5,6 +5,7 @@ import os
 # Sklearn libraries
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.compose import ColumnTransformer
+from sklearn.impute import KNNImputer
 
 # External libraries
 from module_path import train_data_path, test_data_path, train_data_new_path
@@ -49,7 +50,7 @@ class Dataset:
         self.num_samples = num_samples
         self.random_seed = random_seed
     
-    def load_data_frame(self) -> pd.DataFrame:
+    def load_data_frame(self, fill_na:bool=False) -> pd.DataFrame:
         """
         :return: the full data frame for this dataset for train features, test features, and training labels
 
@@ -74,14 +75,21 @@ class Dataset:
         labels = pd.read_excel(os.path.join(train_new_path,"TRAINING_SOLUTIONS.xlsx")).set_index("participant_id").sort_index()
         assert all(train_new_combined.index == labels.index), "Label IDs don't match train IDs"
 
-        # drop columns (cause missing values)
-        drop_cols = [COL_MRI_TRACK_AGE_AT_SCAN, COL_PREINT_DEMOS_FAM_CHILD_ETHNICITY]
-        train_new_combined.drop(drop_cols, axis=1, inplace=True)
-        test_combined.drop(drop_cols, axis=1, inplace=True)
+        if fill_na:
+            n_neighbors = 5 # Select the number of neighbors the kNNImputer algorithm will take as reference
+            train_combined = fill_na_data(train_combined, n_neighbors) # DataFrame not used
+            train_new_combined = fill_na_data(train_new_combined, n_neighbors)
+            test_combined = fill_na_data(test_combined, n_neighbors)
+            print(f'NaN values processed for every dataset by kNNImputer algorithm considering {n_neighbors} neighbors.')
+        else:
+            # drop columns (cause missing values)
+            drop_cols = [COL_MRI_TRACK_AGE_AT_SCAN, COL_PREINT_DEMOS_FAM_CHILD_ETHNICITY]
+            train_new_combined.drop(drop_cols, axis=1, inplace=True)
+            test_combined.drop(drop_cols, axis=1, inplace=True)
 
-        # impute missing values
-        test_combined.fillna(test_combined.median(numeric_only=True), inplace=True)
-        train_new_combined.fillna(train_new_combined.median(numeric_only=True), inplace=True)
+            # impute missing values
+            test_combined.fillna(test_combined.median(numeric_only=True), inplace=True)
+            train_new_combined.fillna(train_new_combined.median(numeric_only=True), inplace=True)
 
         # Sample
         if self.num_samples is not None:
@@ -89,3 +97,12 @@ class Dataset:
 
         return train_new_combined, test_combined, labels
     
+
+def fill_na_data(df, n_neighbors:int=5):
+    imputer = KNNImputer(n_neighbors=n_neighbors)
+    column_names = df.columns
+    index_ = df.index
+    df = imputer.fit_transform(df)
+    df = pd.DataFrame(df, columns=column_names)
+    df.index = index_
+    return df
