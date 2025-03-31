@@ -5,6 +5,7 @@ import os
 # Sklearn libraries
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.compose import ColumnTransformer
+from sklearn.impute import KNNImputer
 
 # External libraries
 from module_path import train_data_path, test_data_path, train_data_new_path
@@ -74,18 +75,40 @@ class Dataset:
         labels = pd.read_excel(os.path.join(train_new_path,"TRAINING_SOLUTIONS.xlsx")).set_index("participant_id").sort_index()
         assert all(train_new_combined.index == labels.index), "Label IDs don't match train IDs"
 
-        # drop columns (cause missing values)
-        drop_cols = [COL_MRI_TRACK_AGE_AT_SCAN, COL_PREINT_DEMOS_FAM_CHILD_ETHNICITY]
-        train_new_combined.drop(drop_cols, axis=1, inplace=True)
-        test_combined.drop(drop_cols, axis=1, inplace=True)
-
-        # impute missing values
-        test_combined.fillna(test_combined.median(numeric_only=True), inplace=True)
-        train_new_combined.fillna(train_new_combined.median(numeric_only=True), inplace=True)
-
         # Sample
         if self.num_samples is not None:
             train_new_combined = train_new_combined.sample(self.num_samples, random_state=self.random_seed)   
 
         return train_new_combined, test_combined, labels
     
+    def load_data_frame_imputed(self):
+        train_combined, test_combined, labels = self.load_data_frame()
+
+        impute_train = Imputer(df=train_combined)
+        impute_test = Imputer(df=test_combined)
+
+        n_neighbors = 5
+        train_combined_imputed = impute_train.imputer_knn(n_neighbors=n_neighbors)
+        test_combined_imputed = impute_test.imputer_knn(n_neighbors=n_neighbors)
+        print(f'NaN values processed for every dataset by kNNImputer algorithm considering {n_neighbors} neighbors.')
+
+        return train_combined_imputed, test_combined_imputed, labels
+
+
+class Imputer():
+
+    def __init__(self, df: pd.DataFrame, n_neighbors:int=5):
+        self.df = df
+
+    def imputer_knn(self, n_neighbors):
+
+        df = self.df.copy()
+
+        imputer = KNNImputer(n_neighbors=n_neighbors)
+        column_names = df.columns
+        index_ = df.index
+        df = imputer.fit_transform(df)
+        df = pd.DataFrame(df, columns=column_names)
+        df.index = index_
+        
+        return df
