@@ -102,14 +102,18 @@ class ModelSubmission:
         """
         :return: (tuple) The sklearn models registered in mlflow for sex_f and adhd, respectively
         """
+        try:
+            mlflow.set_tracking_uri(mlruns_data_path())
+            # If model doesn't exist it will raise an exception that will be catched
+            # by the to_submission method
+            model_sex_f = mlflow.sklearn.load_model(f"models:/Model_{self.sex_f_tag}/{self.version}")
+            model_adhd = mlflow.sklearn.load_model(f"models:/Model_{self.adhd_tag}/{self.version}")
 
-        mlflow.set_tracking_uri(mlruns_data_path())
+            return model_sex_f, model_adhd
 
-        model_sex_f = mlflow.sklearn.load_model(f"models:/Model_{self.sex_f_tag}/{self.version}")
-        model_adhd = mlflow.sklearn.load_model(f"models:/Model_{self.adhd_tag}/{self.version}")
+        except Exception as e:
+            raise Exception(f"Error loading models: {e}")
 
-        return model_sex_f, model_adhd
-    
     def predictions_proba(self):
         """
         :return: (tuple) Predicted probabilities for 1 class (sex_f, adhd)
@@ -150,13 +154,15 @@ class ModelSubmission:
         """
         Writes a csv file based on the submission form
         """
+        try:
+            sex_labels, adhd_labels = self.predictions_labels_from_proba()
 
-        sex_labels, adhd_labels = self.predictions_labels_from_proba()
+            submission = pd.read_excel("../data/SAMPLE_SUBMISSION.xlsx")
 
-        submission = pd.read_excel("../data/SAMPLE_SUBMISSION.xlsx")
+            submission["ADHD_Outcome"] = adhd_labels
+            submission["Sex_F"] = sex_labels
 
-        submission["ADHD_Outcome"] = adhd_labels
-        submission["Sex_F"] = sex_labels
-
-        submission.to_csv(os.path.join(submission_data_path(), output_name), index=False)
-        
+            submission.to_csv(os.path.join(submission_data_path(), output_name), index=False)
+        except Exception as e:
+            print(f"Error submitting models: {e}")
+  
