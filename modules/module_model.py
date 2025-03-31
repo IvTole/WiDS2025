@@ -83,7 +83,9 @@ class ModelSubmission:
     Supports the submission of a model using mlflow, using a dataset
     """
 
-    def __init__(self, X: pd.DataFrame, version: int=1, threshold: float = 0.5):
+    def __init__(self, X: pd.DataFrame, version: int=1, threshold: float = 0.5, 
+                 adhd_tag: str = "adhd", sex_f_tag: str = "sex_f"
+        ):
         """
         :param X: the inputs of the test dataset
         :param version: version of the registered model
@@ -93,19 +95,25 @@ class ModelSubmission:
         self.X = X
         self.version = version
         self.threshold = threshold
+        self.sex_f_tag = sex_f_tag
+        self.adhd_tag = adhd_tag
 
     def load_model(self):
         """
         :return: (tuple) The sklearn models registered in mlflow for sex_f and adhd, respectively
         """
+        try:
+            mlflow.set_tracking_uri(mlruns_data_path())
+            # If model doesn't exist it will raise an exception that will be catched
+            # by the to_submission method
+            model_sex_f = mlflow.sklearn.load_model(f"models:/Model_{self.sex_f_tag}/{self.version}")
+            model_adhd = mlflow.sklearn.load_model(f"models:/Model_{self.adhd_tag}/{self.version}")
 
-        mlflow.set_tracking_uri(mlruns_data_path())
+            return model_sex_f, model_adhd
 
-        model_sex_f = mlflow.sklearn.load_model(f"models:/Model_sex_f/{self.version}")
-        model_adhd = mlflow.sklearn.load_model(f"models:/Model_adhd/{self.version}")
+        except Exception as e:
+            raise Exception(f"Error loading models: {e}")
 
-        return model_sex_f, model_adhd
-    
     def predictions_proba(self):
         """
         :return: (tuple) Predicted probabilities for 1 class (sex_f, adhd)
@@ -146,13 +154,15 @@ class ModelSubmission:
         """
         Writes a csv file based on the submission form
         """
+        try:
+            sex_labels, adhd_labels = self.predictions_labels_from_proba()
 
-        sex_labels, adhd_labels = self.predictions_labels_from_proba()
+            submission = pd.read_excel("../data/SAMPLE_SUBMISSION.xlsx")
 
-        submission = pd.read_excel("../data/SAMPLE_SUBMISSION.xlsx")
+            submission["ADHD_Outcome"] = adhd_labels
+            submission["Sex_F"] = sex_labels
 
-        submission["ADHD_Outcome"] = adhd_labels
-        submission["Sex_F"] = sex_labels
-
-        submission.to_csv(os.path.join(submission_data_path(), output_name), index=False)
-        
+            submission.to_csv(os.path.join(submission_data_path(), output_name), index=False)
+        except Exception as e:
+            print(f"Error submitting models: {e}")
+  
