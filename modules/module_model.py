@@ -73,8 +73,7 @@ class ModelEvaluation:
             mlflow.log_param(hyperparameter, value)
         mlflow.log_metric("f1_score", f1_score)
         signature = infer_signature(self.X_train, model.predict(self.X_train))
-        model_name = f"Model_{self.tag}"
-        mlflow.sklearn.log_model(model, "model", signature=signature, registered_model_name=model_name)
+        mlflow.sklearn.log_model(model, "model", signature=signature)
 
         return f1_score
     
