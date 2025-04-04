@@ -20,9 +20,16 @@ def main():
     start_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print("Start date & time : ", start_datetime)
 
+    # create a Dataset object
     df = Dataset()
-    df_train, df_test, labels = df.load_data_frame_imputed() # train dataframe, test dataframe, y targets dataframe
 
+    # train dataframe, test dataframe, y targets dataframe
+    df_train, df_test, labels = df.load_data_frame_imputed()
+
+    # Genera train dataframe, test dataframe, versión estandarizada para utilizar en futuros modelos 
+    df_train_std, df_test_std = df.load_data_frame_standardized()
+
+    # define array of target variables for the model
     targets = ['ADHD_Outcome',  'Sex_F']
 
     # evaluate models (adhd)

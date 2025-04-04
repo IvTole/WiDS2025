@@ -65,7 +65,7 @@ class ModelEvaluation:
         model.fit(self.X_train, self.y_train)
         y_pred = model.predict(self.X_test)
         f1_score = metrics.f1_score(self.y_test, y_pred)
-        print(f"{model}: f1_score={f1_score:.1f}")
+        print(f"{model}: f1_score={f1_score:.2f}")
 
         # log parameters and metrics in MLFlow
         mlflow.log_param("Model Type", type(model).__name__ + '_' + self.tag)

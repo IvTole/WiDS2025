@@ -57,19 +57,26 @@ class Dataset:
         Note: Null values are dropped and invoice date variable type is changed to timestamp
         """
 
-        train_path = train_data_path()
+        #train_path = train_data_path()
         train_new_path = train_data_new_path()
         test_path = test_data_path()
         
-        train_q = pd.read_excel(os.path.join(train_path,"TRAIN_QUANTITATIVE_METADATA.xlsx"))
-        train_c = pd.read_excel(os.path.join(train_path,"TRAIN_CATEGORICAL_METADATA.xlsx"))
+        # old datasets for trainning
+        #train_q = pd.read_excel(os.path.join(train_path,"TRAIN_QUANTITATIVE_METADATA.xlsx"))
+        #train_c = pd.read_excel(os.path.join(train_path,"TRAIN_CATEGORICAL_METADATA.xlsx"))
+
+        #train_combined = pd.merge(train_q, train_c, on="participant_id", how="left").set_index("participant_id")
+        
+        # new datasets for trainning
         train_new_q = pd.read_excel(os.path.join(train_new_path,"TRAIN_QUANTITATIVE_METADATA_new.xlsx"))
         train_new_c = pd.read_excel(os.path.join(train_new_path,"TRAIN_CATEGORICAL_METADATA_new.xlsx"))
-        test_q = pd.read_excel(os.path.join(test_path,"TEST_QUANTITATIVE_METADATA.xlsx"))
-        test_c = pd.read_excel(os.path.join(test_path,"TEST_CATEGORICAL.xlsx"))
-
-        train_combined = pd.merge(train_q, train_c, on="participant_id", how="left").set_index("participant_id")
+        
         train_new_combined = pd.merge(train_new_q, train_new_c, on="participant_id", how="left").set_index("participant_id").sort_index()
+
+        # datasets for testing
+        test_q = pd.read_excel(os.path.join(test_path,"TEST_QUANTITATIVE_METADATA.xlsx"))
+        test_c = pd.read_excel(os.path.join(test_path,"TEST_CATEGORICAL.xlsx"))        
+                
         test_combined = pd.merge(test_q, test_c, on="participant_id", how="left").set_index("participant_id")
 
         labels = pd.read_excel(os.path.join(train_new_path,"TRAINING_SOLUTIONS.xlsx")).set_index("participant_id").sort_index()
@@ -93,6 +100,23 @@ class Dataset:
         print(f'NaN values processed for every dataset by kNNImputer algorithm considering {n_neighbors} neighbors.')
 
         return train_combined_imputed, test_combined_imputed, labels
+    
+    def load_data_frame_standardized(self):
+        train_data, test_data, labels = self.load_data_frame_imputed()
+
+        # Inicializar preprocesador
+        preprocessor = Preprocessor(method="standard")
+
+        # Ajustar y transformar train
+        train_standardized = preprocessor.fit_transform(train_data)
+
+        # Transformar test con los mismos parámetros del train
+        test_standardized = preprocessor.transform(test_data)
+
+        print(train_standardized.head())
+        print(test_standardized.head())
+
+        return train_standardized, test_standardized
 
 
 class Imputer():
@@ -112,3 +136,38 @@ class Imputer():
         df.index = index_
         
         return df
+
+
+class Preprocessor:
+    def __init__(self, method: str = "standard"):
+        """
+        :param method: Método de estandarización ("standard" para StandardScaler, "minmax" para MinMaxScaler).
+        """
+        self.method = method
+        self.scaler = StandardScaler() if self.method == "standard" else MinMaxScaler()
+
+    def fit(self, df: pd.DataFrame):
+        """
+        Ajusta el scaler con las columnas numéricas del train set.
+        """
+        num_cols = df.select_dtypes(include=["number"]).columns
+        self.scaler.fit(df[num_cols])
+
+    def transform(self, df: pd.DataFrame):
+        """
+        Transforma el dataset usando el scaler ajustado.
+        """
+        df_copy = df.copy()
+        num_cols = df.select_dtypes(include=["number"]).columns
+        df_copy[num_cols] = self.scaler.transform(df_copy[num_cols])
+        return df_copy
+
+    def fit_transform(self, df: pd.DataFrame):
+        """
+        Ajusta y transforma el dataset (solo debe usarse en el train set).
+        """
+        self.fit(df)
+        return self.transform(df)
+    
+
+
