@@ -30,7 +30,6 @@ def mlflow_logger(func):
             exp_id = mlflow.create_experiment(name=experiment_name)
         except Exception as e:
             exp_id = mlflow.get_experiment_by_name(experiment_name).experiment_id
-#actualizacion.
         with mlflow.start_run(experiment_id=exp_id):
             return func(*args, **kwargs)
     return wrapper
