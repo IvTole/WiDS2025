@@ -30,7 +30,6 @@ def mlflow_logger(func):
             exp_id = mlflow.create_experiment(name=experiment_name)
         except Exception as e:
             exp_id = mlflow.get_experiment_by_name(experiment_name).experiment_id
-
         with mlflow.start_run(experiment_id=exp_id):
             return func(*args, **kwargs)
     return wrapper
@@ -74,6 +73,10 @@ class ModelEvaluation:
         mlflow.log_metric("f1_score", f1_score)
         signature = infer_signature(self.X_train, model.predict(self.X_train))
         mlflow.sklearn.log_model(model, "model", signature=signature)
+
+        #Update model name in MLFlow.
+        run_label = f"{type(model).__name__}_{self.tag}_f1_score={f1_score:.5f}"
+        mlflow.set_tag("mlflow.runName", run_label)
 
         return f1_score
     
