@@ -1,5 +1,8 @@
 # Standar libraries
 from datetime import datetime
+from xgboost import XGBClassifier
+import xgboost as xgb
+import pandas as pd
 
 # Scikit learn
 from sklearn.model_selection import train_test_split
@@ -43,6 +46,32 @@ def main():
     # prediction with test dataset
     sub = ModelSubmission(X=df_test, version=1, threshold=0.5, adhd_tag="adhd", sex_f_tag="sex_f")
     sub.to_submission(output_name='submission.csv')
+
+    #Train and evaluate Gradient Boosting (Please "pip install xgboost") Andres Vazquez
+    
+    #Hace matriz xy
+
+    matrix_train_xgb=xgb.DMatrix(df_train,labels[targets[1]])
+    
+    matrix_test_xgb=xgb.DMatrix(df_test)  
+
+    param ={
+        'max_depth': 4,
+        'eta': 0.3,
+        'objective':'multi:softmax',
+        'tree_method': 'auto',
+        'num_class': 3}
+    epochs=10
+    
+    #Entrenado del modelo
+    model_xgb =xgb.train(param,matrix_train_xgb,epochs)
+    
+    #Predicciones
+
+    predictions= model_xgb.predict(matrix_test_xgb)
+
+    print(f"Predicciones XGBoost: {predictions}")
+
 
     # Train and evaluate RandomForest for adhd
     rf_adhd = ModelEvaluation(X=df_train, y=labels[targets[0]], tag='rf_adhd')
