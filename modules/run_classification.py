@@ -48,8 +48,8 @@ def main():
     sub.to_submission(output_name='submission.csv')
 
     #Train and evaluate Gradient Boosting (Please "pip install xgboost") Andres Vazquez
-    
-    #Hace matriz xy
+        #SEXO FEMENINO
+        #Hace matriz xy
 
     matrix_train_xgb=xgb.DMatrix(df_train,labels[targets[1]])
     
@@ -63,15 +63,36 @@ def main():
         'num_class': 3}
     epochs=10
     
-    #Entrenado del modelo
+        #Entrenado del modelo
     model_xgb =xgb.train(param,matrix_train_xgb,epochs)
     
-    #Predicciones
+        #Predicciones
 
     predictions= model_xgb.predict(matrix_test_xgb)
 
-    print(f"Predicciones XGBoost: {predictions}")
+    print(f"Predicciones XGBoost Sexo F: {predictions}")
 
+        #Gradient Boosting adhd
+    matrix_train_xgb=xgb.DMatrix(df_train,labels[targets[0]])
+    
+    matrix_test_xgb=xgb.DMatrix(df_test)  
+
+    param ={
+        'max_depth': 4,
+        'eta': 0.3,
+        'objective':'multi:softmax',
+        'tree_method': 'auto',
+        'num_class': 3}
+    epochs=10
+    
+        #Entrenado del modelo
+    model_xgb =xgb.train(param,matrix_train_xgb,epochs)
+    
+        #Predicciones
+
+    predictions= model_xgb.predict(matrix_test_xgb)
+
+    print(f"Predicciones XGBoost ADHD: {predictions}")
 
     # Train and evaluate RandomForest for adhd
     rf_adhd = ModelEvaluation(X=df_train, y=labels[targets[0]], tag='rf_adhd')
