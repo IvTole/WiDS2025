@@ -9,9 +9,12 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.decomposition import PCA
 
+
+
 # External modules
 from module_path import test_data_path, train_data_path, plots_data_path
 from module_data import Dataset
+from module_graph import graph_tree
 from module_model import ModelEvaluation, ModelSubmission
 
 
@@ -56,13 +59,13 @@ def main():
 
     # Train and evaluate RandomForest for sex_f
     rf_sex_f = ModelEvaluation(X=df_train, y=labels[targets[0]], tag='rf_sex_f')
-    rf_sex_f.evaluate_model(RandomForestClassifier(
-        n_estimators=100,
-        criterion="gini",
-        max_depth=10,
-        random_state=42,
-        bootstrap=True,
-    ))
+    
+    #sets the model 
+    model_to_evaluate= RandomForestClassifier(n_estimators=100, criterion="gini", max_depth=10, random_state=42, bootstrap=True)
+    rf_sex_f.evaluate_model(model=model_to_evaluate)
+    
+    # Plots a tree of the forest
+    graph_tree(model_to_evaluate)
 
     # prediction with test dataset
     sub = ModelSubmission(X=df_test, version=1, threshold=0.5, adhd_tag="rf_adhd", sex_f_tag="rf_sex_f")
