@@ -29,6 +29,9 @@ def main():
     # train dataframe, test dataframe, y targets dataframe
     df_train, df_test, labels = df.load_data_frame_imputed()
 
+    #Elimina columnas que no tienen una buena correlación con el resultado
+    df_train_select, df_test_select, labels = df.load_relevant_data()
+
     # Genera train dataframe, test dataframe, versión estandarizada para utilizar en futuros modelos 
     df_train_std, df_test_std = df.load_data_frame_standardized()
 
