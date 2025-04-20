@@ -8,6 +8,7 @@ import functools
 # Sklearn
 import sklearn.metrics as metrics
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report, confusion_matrix, ConfusionMatrixDisplay
 
 # MLFlow
 import mlflow
@@ -15,6 +16,7 @@ from mlflow.models.signature import infer_signature
 
 # External modules
 from module_path import plots_data_path, mlruns_data_path, submission_data_path
+from module_graph import graph_confusion_matrix
 
 def mlflow_logger(func):
     """Decorator to automatically start and close an mlflow run"""
@@ -63,19 +65,43 @@ class ModelEvaluation:
         """
         model.fit(self.X_train, self.y_train)
         y_pred = model.predict(self.X_test)
+
+        print(f"\nModel evaluation: {type(model).__name__} - {self.tag}")
+
+        cm = confusion_matrix(self.y_test, y_pred)
+        print(f"\nConfusion matrix ({self.tag}):\n{cm}")
+
+        graph_confusion_matrix(cm, type(model).__name__, self.tag, labels=sorted(set(self.y_test)))
+
         f1_score = metrics.f1_score(self.y_test, y_pred)
-        print(f"{model}: f1_score={f1_score:.2f}")
+        print(f"\nF1_score  : {f1_score:.2f}")
+
+        acc = accuracy_score(self.y_test, y_pred)
+        print(f"Accuracy  : {acc:.2f}")
+
+        prec = precision_score(self.y_test, y_pred)
+        print(f"Precision : {prec:.2f}")
+
+        rec = recall_score(self.y_test, y_pred)
+        print(f"Recall    : {rec:.2f}")
+
+        #print("\n Clasification report:\n")
+        #print(classification_report(self.y_test, y_pred))
+
 
         # log parameters and metrics in MLFlow
         mlflow.log_param("Model Type", type(model).__name__ + '_' + self.tag)
         for hyperparameter, value in model.get_params().items():
             mlflow.log_param(hyperparameter, value)
         mlflow.log_metric("f1_score", f1_score)
+        mlflow.log_metric("accuracy", acc)
+        mlflow.log_metric("precision", prec)
+        mlflow.log_metric("recall", rec)
         signature = infer_signature(self.X_train, model.predict(self.X_train))
         mlflow.sklearn.log_model(model, "model", signature=signature)
 
         #Update model name in MLFlow.
-        run_label = f"{type(model).__name__}_{self.tag}_f1_score={f1_score:.5f}"
+        run_label = f"{type(model).__name__}_{self.tag}_f1_score={f1_score:.5f}_acc={acc:.5f}"
         mlflow.set_tag("mlflow.runName", run_label)
 
         return f1_score
