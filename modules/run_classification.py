@@ -1,8 +1,5 @@
 # Standar libraries
 from datetime import datetime
-from xgboost import XGBClassifier
-import xgboost as xgb
-import pandas as pd
 
 # Scikit learn
 from sklearn.model_selection import train_test_split
@@ -12,10 +9,13 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.decomposition import PCA
 
+
+
 # External modules
 from module_path import test_data_path, train_data_path, plots_data_path
 from module_data import Dataset
-from module_model import ModelEvaluation, ModelSubmission
+from module_graph import graph_tree
+from module_model import ModelEvaluation, ModelEvaluationXG, ModelSubmission
 
 
 def main():
@@ -47,53 +47,6 @@ def main():
     sub = ModelSubmission(X=df_test, version=1, threshold=0.5, adhd_tag="adhd", sex_f_tag="sex_f")
     sub.to_submission(output_name='submission.csv')
 
-    #Train and evaluate Gradient Boosting (Please "pip install xgboost") Andres Vazquez
-        #SEXO FEMENINO
-        #Hace matriz xy
-
-    matrix_train_xgb=xgb.DMatrix(df_train,labels[targets[1]])
-    
-    matrix_test_xgb=xgb.DMatrix(df_test)  
-
-    param ={
-        'max_depth': 4,
-        'eta': 0.3,
-        'objective':'multi:softmax',
-        'tree_method': 'auto',
-        'num_class': 3}
-    epochs=10
-    
-        #Entrenado del modelo
-    model_xgb =xgb.train(param,matrix_train_xgb,epochs)
-    
-        #Predicciones
-
-    predictions= model_xgb.predict(matrix_test_xgb)
-
-    print(f"Predicciones XGBoost Sexo F: {predictions}")
-
-        #Gradient Boosting adhd
-    matrix_train_xgb=xgb.DMatrix(df_train,labels[targets[0]])
-    
-    matrix_test_xgb=xgb.DMatrix(df_test)  
-
-    param ={
-        'max_depth': 4,
-        'eta': 0.3,
-        'objective':'multi:softmax',
-        'tree_method': 'auto',
-        'num_class': 3}
-    epochs=10
-    
-        #Entrenado del modelo
-    model_xgb =xgb.train(param,matrix_train_xgb,epochs)
-    
-        #Predicciones
-
-    predictions= model_xgb.predict(matrix_test_xgb)
-
-    print(f"Predicciones XGBoost ADHD: {predictions}")
-
     # Train and evaluate RandomForest for adhd
     rf_adhd = ModelEvaluation(X=df_train, y=labels[targets[0]], tag='rf_adhd')
     rf_adhd.evaluate_model(RandomForestClassifier(
@@ -106,17 +59,24 @@ def main():
 
     # Train and evaluate RandomForest for sex_f
     rf_sex_f = ModelEvaluation(X=df_train, y=labels[targets[0]], tag='rf_sex_f')
-    rf_sex_f.evaluate_model(RandomForestClassifier(
-        n_estimators=100,
-        criterion="gini",
-        max_depth=10,
-        random_state=42,
-        bootstrap=True,
-    ))
+    
+    #sets the model 
+    model_to_evaluate= RandomForestClassifier(n_estimators=100, criterion="gini", max_depth=10, random_state=42, bootstrap=True)
+    rf_sex_f.evaluate_model(model=model_to_evaluate)
+    
+    # Plots a tree of the forest
+    graph_tree(model_to_evaluate)
 
     # prediction with test dataset
     sub = ModelSubmission(X=df_test, version=1, threshold=0.5, adhd_tag="rf_adhd", sex_f_tag="rf_sex_f")
     sub.to_submission(output_name='submission_rf.csv')
+
+    # XGBoost model (for adhd)
+    ev = ModelEvaluationXG(X=df_train, y=labels[targets[0]], tag='adhd')
+    ev.evaluate_model()
+    # XGBoost model (for sex_f)
+    ev = ModelEvaluationXG(X=df_train, y=labels[targets[1]], tag='sex_f')
+    ev.evaluate_model()
 
 if __name__ == '__main__':
     main()
