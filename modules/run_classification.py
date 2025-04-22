@@ -36,30 +36,33 @@ def main():
     targets = ['ADHD_Outcome',  'Sex_F']
 
     # Create the hiperparameters grid for the GridSearchCV
-    param_grid_rf = {
-    'n_estimators': [100, 300, 500, 750, 1000],
-    'max_depth': [3, 5, 7, 10, 15, 20],
-    'bootstrap': [True, False],
-    'criterion': ['gini', 'entropy', 'log_loss']
-    }
-
     param_grid_lr = {
     'C': [0.1, 1.0, 10.0],
-    'solver': ['lbfgs', 'liblinear', 'saga'],
-    'max_iter': [1000, 2500, 5000]
+    'solver': ['lbfgs', 'liblinear'],
+    }
+    
+    param_grid_rf = {
+    'n_estimators': [100, 500, 1000],
+    'max_depth': [3, 5, 10, 20],
+    'bootstrap': [True, False],
+    'criterion': ['gini', 'entropy']
     }
 
-    # Create grid for models
-    grid_lr = GridSearchCV(LogisticRegression(), param_grid_lr, cv=5, scoring='accuracy')
-    grid_rf = GridSearchCV(RandomForestClassifier(random_state=42), param_grid_rf, cv=5, scoring='accuracy')
+    # evaluate model Logistic Regression (adhd)
+    lr_adhd = ModelEvaluation(X=df_train, y=labels[targets[0]], tag='adhd')
+    best_model_lr_adhd, f1_lr = lr_adhd.evaluate_with_gridsearch(
+    base_model=LogisticRegression(max_iter=5000),
+    param_grid=param_grid_lr,
+    scoring='f1'
+)
 
-    # evaluate models (adhd)
-    ev = ModelEvaluation(X=df_train, y=labels[targets[0]], tag='adhd')
-    ev.evaluate_model(grid_lr)
-
-    # evaluate models (sex_f)
-    ev = ModelEvaluation(X=df_train, y=labels[targets[1]], tag='sex_f')
-    ev.evaluate_model(grid_lr)
+    # evaluate model Logistic Regression (sex_f)
+    lr_sex_f = ModelEvaluation(X=df_train, y=labels[targets[1]], tag='sex_f')
+    best_model_lr_sex_f, f1_lr = lr_sex_f.evaluate_with_gridsearch(
+    base_model=LogisticRegression(max_iter=5000),
+    param_grid=param_grid_lr,
+    scoring='f1'
+)
     
     # prediction with test dataset
     sub = ModelSubmission(X=df_test, version=1, threshold=0.5, adhd_tag="adhd", sex_f_tag="sex_f")
@@ -67,17 +70,23 @@ def main():
 
     # Train and evaluate RandomForest for adhd
     rf_adhd = ModelEvaluation(X=df_train, y=labels[targets[0]], tag='rf_adhd')
-    rf_adhd.evaluate_model(grid_rf)
+    best_model_rf_adhd, f1_rf = rf_adhd.evaluate_with_gridsearch(
+    base_model=RandomForestClassifier(random_state=42),
+    param_grid=param_grid_rf,
+    scoring='f1'
+)
 
     # Train and evaluate RandomForest for sex_f
     rf_sex_f = ModelEvaluation(X=df_train, y=labels[targets[1]], tag='rf_sex_f')
-    
-    #sets the model 
-    model_to_evaluate= RandomForestClassifier(grid_lr)
-    rf_sex_f.evaluate_model(model=model_to_evaluate)
+    best_model_rf_sex_f, f1_rf = rf_sex_f.evaluate_with_gridsearch(
+    base_model=RandomForestClassifier(random_state=42),
+    param_grid=param_grid_rf,
+    scoring='f1'
+)
     
     # Plots a tree of the forest
-    graph_tree(model_to_evaluate)
+    graph_tree(best_model_rf_adhd)
+    graph_tree(best_model_rf_sex_f)
 
     # prediction with test dataset
     sub = ModelSubmission(X=df_test, version=1, threshold=0.5, adhd_tag="rf_adhd", sex_f_tag="rf_sex_f")
