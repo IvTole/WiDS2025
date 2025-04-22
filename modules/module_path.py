@@ -66,6 +66,19 @@ def plots_data_path() -> Path:
         else:
             raise Exception("Plots directory not found")
         
+def lr_plots_data_path() -> Path:
+    """
+    Returns the location of the lr_plots directory for Logistic Regression results.
+    """
+    cwd = Path("..")
+    for folder in (cwd, cwd / "..", cwd / ".." / ".."):
+        lr_plots_folder = folder / "lr_plots"
+        if lr_plots_folder.exists() and lr_plots_folder.is_dir():
+            print("Logistic Regression plots directory found in ", lr_plots_folder)
+            return lr_plots_folder
+        else:
+            raise Exception("Logistic Regression plots directory not found")
+        
 def mlruns_data_path() -> Path:
     """
     Returns the location of the mlruns directory, allowing for script executions in subfolders without worrying about the
