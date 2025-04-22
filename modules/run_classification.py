@@ -85,8 +85,8 @@ def main():
 )
     
     # Plots a tree of the forest
-    graph_tree(best_model_rf_adhd)
-    graph_tree(best_model_rf_sex_f)
+    graph_tree(best_model_rf_adhd, tag='rf_adhd')
+    graph_tree(best_model_rf_sex_f, tag='rf_sex_f')
 
     # prediction with test dataset
     sub = ModelSubmission(X=df_test, version=1, threshold=0.5, adhd_tag="rf_adhd", sex_f_tag="rf_sex_f")
