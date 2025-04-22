@@ -16,7 +16,7 @@ from mlflow.models.signature import infer_signature
 
 # External modules
 from module_path import plots_data_path, mlruns_data_path, submission_data_path
-from module_graph import graph_confusion_matrix
+from module_graph import graph_confusion_matrix,graph_lr_coefficients
 
 def mlflow_logger(func):
     """Decorator to automatically start and close an mlflow run"""
@@ -56,6 +56,14 @@ class ModelEvaluation:
             random_state=random_state, test_size=test_size, shuffle=shuffle)
         
         self.tag = tag
+
+    def get_logistic_regression_model(self):
+        """
+        Returns an instance of Logistic Regression with default parameters.
+        """
+        from sklearn.linear_model import LogisticRegression
+        return LogisticRegression(solver='lbfgs', max_iter=5000, random_state=42) # Añadí random_state
+
 
     @mlflow_logger
     def evaluate_model(self, model) -> float:
@@ -100,6 +108,16 @@ class ModelEvaluation:
         signature = infer_signature(self.X_train, model.predict(self.X_train))
         mlflow.sklearn.log_model(model, "model", signature=signature)
 
+        # Visualizar los coeficientes para Regresión Logística
+        from sklearn.linear_model import LogisticRegression
+        if isinstance(model, LogisticRegression):
+            try:
+                coefficients = model.coef_[0]
+                feature_names = self.X_train.columns
+                graph_lr_coefficients(coefficients, feature_names, model_name, self.tag)
+            except Exception as e:
+                print(f"Error al graficar los coeficientes de LR: {e}")
+                
         #Update model name in MLFlow.
         run_label = f"{type(model).__name__}_{self.tag}_f1_score={f1_score:.5f}_acc={acc:.5f}"
         mlflow.set_tag("mlflow.runName", run_label)
