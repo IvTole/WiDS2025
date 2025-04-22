@@ -9,3 +9,4 @@
 **/.DS_Store
 **/mlruns/*
 !**/mlruns/.gitkeep
+/plots/*.png
