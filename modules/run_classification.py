@@ -35,6 +35,20 @@ def main():
     # define array of target variables for the model
     targets = ['ADHD_Outcome',  'Sex_F']
 
+    # Create the hiperparameters grid for the GridSearchCV
+    param_grid_rf = {
+    'n_estimators': [100, 300, 500, 750, 1000],
+    'max_depth': [3, 5, 7, 10, 15, 20],
+    'bootstrap': [True, False],
+    'criterion': ['gini', 'entropy', 'log_loss']
+    }
+
+    param_grid_lr = {
+    'C': [0.1, 1.0, 10.0],
+    'solver': ['lbfgs', 'liblinear', 'saga'],
+    'max_iter': [1000, 2500, 5000]
+    }
+
     # evaluate models (adhd)
     ev = ModelEvaluation(X=df_train, y=labels[targets[0]], tag='adhd')
     ev.evaluate_model(LogisticRegression(solver='lbfgs', max_iter=5000))
