@@ -16,6 +16,7 @@ from module_path import test_data_path, train_data_path, plots_data_path
 from module_data import Dataset
 from module_graph import graph_tree
 from module_model import ModelEvaluation, ModelSubmission
+from model_params import get_lr, get_rf
 
 
 def main():
@@ -32,44 +33,43 @@ def main():
     # Genera train dataframe, test dataframe, versión estandarizada para utilizar en futuros modelos 
     df_train_std, df_test_std = df.load_data_frame_standardized()
 
-    # define array of target variables for the model
-    targets = ['ADHD_Outcome',  'Sex_F']
+    # define targets variables and his prefix for the model
+    targets = {
+        'ADHD_Outcome': 'adhd',
+        'Sex_F': 'sex_f'
+    }
 
-    # evaluate models (adhd)
-    ev = ModelEvaluation(X=df_train, y=labels[targets[0]], tag='adhd')
-    ev.evaluate_model(LogisticRegression(solver='lbfgs', max_iter=5000))
+    #List of models along with their parameters and their prefix.
+    modelos = [
+        ('Logistic Regression', get_lr, 'lr'),
+        ('Random Forest', get_rf, 'rf'),
+    ]
 
-    # evaluate models (sex_f)
-    ev = ModelEvaluation(X=df_train, y=labels[targets[1]], tag='sex_f')
-    ev.evaluate_model(LogisticRegression(solver='lbfgs', max_iter=5000))
-    
-    # prediction with test dataset
-    sub = ModelSubmission(X=df_test, version=1, threshold=0.5, adhd_tag="adhd", sex_f_tag="sex_f")
-    sub.to_submission(output_name='submission.csv')
+    #Evaluation loop for each model.
+    submission_tags = {}
+    for name, model_fn, prefix in modelos:
+        print(f"\n Evaluando {name}")
+        for col, tag in targets.items():
+            model_tag = f"{prefix}_{tag}"
+            evaluator = ModelEvaluation(X=df_train, y=labels[col], tag=model_tag)
+            evaluator.evaluate_model(model_fn())
+            submission_tags[tag] = model_tag
 
-    # Train and evaluate RandomForest for adhd
-    rf_adhd = ModelEvaluation(X=df_train, y=labels[targets[0]], tag='rf_adhd')
-    rf_adhd.evaluate_model(RandomForestClassifier(
-        n_estimators=1000,
-        criterion="gini",
-        max_depth=10,
-        random_state=42,
-        bootstrap=True,
-    ))
-
-    # Train and evaluate RandomForest for sex_f
-    rf_sex_f = ModelEvaluation(X=df_train, y=labels[targets[1]], tag='rf_sex_f')
-    
-    #sets the model 
-    model_to_evaluate= RandomForestClassifier(n_estimators=100, criterion="gini", max_depth=10, random_state=42, bootstrap=True)
-    rf_sex_f.evaluate_model(model=model_to_evaluate)
-    
-    # Plots a tree of the forest
-    graph_tree(model_to_evaluate)
-
-    # prediction with test dataset
-    sub = ModelSubmission(X=df_test, version=1, threshold=0.5, adhd_tag="rf_adhd", sex_f_tag="rf_sex_f")
-    sub.to_submission(output_name='submission_rf.csv')
+            #Graphic for models (Random Forest).
+            if prefix == "rf" and tag == "sex_f":
+                modelo_rf = model_fn()
+                modelo_rf.fit(df_train, labels[col])
+                graph_tree(modelo_rf)
+        
+        #Create the files that will be sent (submission section).
+        sub = ModelSubmission(
+            X=df_test,
+            version=1,
+            threshold=0.5,
+            adhd_tag=submission_tags['adhd'],
+            sex_f_tag=submission_tags['sex_f']
+        )
+        sub.to_submission(output_name=f"submission_{prefix}.csv")
 
 if __name__ == '__main__':
     main()
