@@ -8,6 +8,8 @@ from sklearn.compose import ColumnTransformer
 from sklearn.impute import KNNImputer
 
 # External libraries
+from module_preprocessing import PreprocessingPipeline
+
 from module_path import train_data_path, test_data_path, train_data_new_path
 
 COL_EHQ_EHQ_TOTAL = "EHQ_EHQ_Total"
@@ -110,9 +112,16 @@ class Dataset:
         # Ajustar y transformar train
         train_standardized = preprocessor.fit_transform(train_data)
 
+        # Convertir a DataFrame
+        train_standardized = pd.DataFrame(train_standardized, columns=train_data.columns, index=train_data.index)
+
         # Transformar test con los mismos parámetros del train
         test_standardized = preprocessor.transform(test_data)
 
+        # Convertir a DataFrame
+        test_standardized = pd.DataFrame(test_standardized, columns=test_data.columns, index=test_data.index)
+
+        # Mostrar una vista previa de los datos preprocesados
         print(train_standardized.head())
         print(test_standardized.head())
 
