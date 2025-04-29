@@ -8,6 +8,8 @@ from sklearn.compose import ColumnTransformer
 from sklearn.impute import KNNImputer
 
 # External libraries
+from module_preprocessing import PreprocessingPipeline
+
 from module_path import train_data_path, test_data_path, train_data_new_path
 
 COL_EHQ_EHQ_TOTAL = "EHQ_EHQ_Total"
@@ -110,14 +112,51 @@ class Dataset:
         # Ajustar y transformar train
         train_standardized = preprocessor.fit_transform(train_data)
 
+        # Convertir a DataFrame
+        train_standardized = pd.DataFrame(train_standardized, columns=train_data.columns, index=train_data.index)
+
         # Transformar test con los mismos parámetros del train
         test_standardized = preprocessor.transform(test_data)
 
+        # Convertir a DataFrame
+        test_standardized = pd.DataFrame(test_standardized, columns=test_data.columns, index=test_data.index)
+
+        # Mostrar una vista previa de los datos preprocesados
         print(train_standardized.head())
         print(test_standardized.head())
 
         return train_standardized, test_standardized
+    
+    def load_relevant_data(self, threshold=0.1):
+      '''Elimina variables que no correlacionan bien con el resultado. threshold = valor de correlación mínimo a tomar en cuenta'''
+      train_data, test_data, labels = self.load_data_frame()
 
+      # Verifica que labels sea un DataFrame con 2 columnas
+      if not isinstance(labels, pd.DataFrame) or labels.shape[1] != 2:
+          raise ValueError("Se esperaban exactamente dos columnas en las etiquetas.")
+
+      # Calcular correlaciones absolutas con cada etiqueta
+      correlations = pd.DataFrame({
+          col: train_data.corrwith(labels[col]).abs()
+          for col in labels.columns
+      })
+
+      # Conservar solo columnas que cumplan el umbral en ambas correlaciones
+      #mask = (correlations >= threshold).all(axis=1)
+      mask = (correlations >= threshold).any(axis=1)
+
+      relevant_cols = correlations[mask].index
+      removed_cols = correlations[~mask]
+
+      train_filtered = train_data[relevant_cols]
+      test_filtered = test_data[relevant_cols]
+
+      print("Eliminated columns for low correlation on both results:")
+      for col in removed_cols.index:
+          corr_vals = ", ".join(f"{col_name}: {removed_cols.loc[col, col_name]:.4f}" for col_name in removed_cols.columns)
+          print(f" - {col} ({corr_vals})")
+
+      return train_filtered, test_filtered, labels
 
 class Imputer():
 

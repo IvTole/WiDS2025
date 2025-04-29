@@ -10,6 +10,10 @@ import sklearn.metrics as metrics
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report, confusion_matrix, ConfusionMatrixDisplay
 
+# XGBoost
+from xgboost import XGBClassifier
+import xgboost as xgb
+
 # MLFlow
 import mlflow
 from mlflow.models.signature import infer_signature
@@ -135,6 +139,66 @@ class ModelEvaluation:
         mlflow.set_tag("mlflow.runName", run_label)
 
         return f1_score
+    
+class ModelEvaluationXG:
+    """
+    Supports the evaluation of classification models (xgboost), collecting the results.
+    """
+
+    def __init__(self, X: pd.DataFrame, y: pd.Series, tag: str, test_size: float = 0.3, shuffle: bool = True, random_state: int = 42):
+        """
+        :param X: the inputs
+        :param y: the prediction targets
+        :param test_size: the fraction of the data to reserve for testing
+        :param shuffle: whether to shuffle the data prior to splitting
+        :param random_state: the random seed
+        :param tag: target name for logging
+        """
+
+        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X, y,
+            random_state=random_state, test_size=test_size, shuffle=shuffle)
+        
+        self.tag = tag
+
+    @mlflow_logger
+    def evaluate_model(self) -> float:
+        """
+        :param model: the model to evaluate
+        :return: the f1-score
+        """
+        matrix_train_xgb=xgb.DMatrix(self.X_train,label=self.y_train)
+        matrix_test_xgb=xgb.DMatrix(self.X_test)  
+
+        param ={
+        'max_depth': 4,
+        'eta': 0.3,
+        'objective':'multi:softmax',
+        'tree_method': 'auto',
+        'num_class': 3}
+        epochs=10
+
+        model_xgb = xgb.train(params=param,dtrain=matrix_train_xgb,num_boost_round=epochs)
+
+        y_pred = model_xgb.predict(matrix_test_xgb)
+
+        f1_score = metrics.f1_score(self.y_test, y_pred)
+        print(f"XGBoost model: f1_score={f1_score:.2f}")
+
+        # log parameters and metrics in MLFlow
+        mlflow.log_param("Model Type", 'XGBoost_' + self.tag)
+        for k, v in param.items():
+            mlflow.log_param(k, v)
+        mlflow.log_metric("f1_score", f1_score)
+        signature = infer_signature(self.X_train, y_pred)
+        mlflow.xgboost.log_model(model_xgb, "model", signature=signature)
+
+        #Update model name in MLFlow.
+        run_label = f"XGBoost_{self.tag}_f1_score={f1_score:.5f}"
+        mlflow.set_tag("mlflow.runName", run_label)
+
+        return f1_score
+
+    
     
 class ModelSubmission:
 

@@ -15,7 +15,8 @@ from sklearn.decomposition import PCA
 from module_path import test_data_path, train_data_path, plots_data_path
 from module_data import Dataset
 from module_graph import graph_tree
-from module_model import ModelEvaluation, ModelSubmission
+from module_model import ModelEvaluation, ModelEvaluationXG, ModelSubmission
+
 
 
 def main():
@@ -28,6 +29,9 @@ def main():
 
     # train dataframe, test dataframe, y targets dataframe
     df_train, df_test, labels = df.load_data_frame_imputed()
+
+    #Elimina columnas que no tienen una buena correlación con el resultado
+    df_train_select, df_test_select, labels = df.load_relevant_data()
 
     # Genera train dataframe, test dataframe, versión estandarizada para utilizar en futuros modelos 
     df_train_std, df_test_std = df.load_data_frame_standardized()
@@ -91,6 +95,13 @@ def main():
     # prediction with test dataset
     sub = ModelSubmission(X=df_test, version=1, threshold=0.5, adhd_tag="rf_adhd", sex_f_tag="rf_sex_f")
     sub.to_submission(output_name='submission_rf.csv')
+
+    # XGBoost model (for adhd)
+    ev = ModelEvaluationXG(X=df_train, y=labels[targets[0]], tag='adhd')
+    ev.evaluate_model()
+    # XGBoost model (for sex_f)
+    ev = ModelEvaluationXG(X=df_train, y=labels[targets[1]], tag='sex_f')
+    ev.evaluate_model()
 
 if __name__ == '__main__':
     main()
