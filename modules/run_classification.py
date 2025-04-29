@@ -36,6 +36,9 @@ def main():
     # Genera train dataframe, test dataframe, versión estandarizada para utilizar en futuros modelos 
     df_train_std, df_test_std = df.load_data_frame_standardized()
 
+    # PCA ---
+    df.load_data_frame_pca(n_comp=5, targets=['ADHD_Outcome', 'Sex_F'])
+
     # define array of target variables for the model
     targets = ['ADHD_Outcome',  'Sex_F']
 

@@ -6,9 +6,14 @@ import os
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import KNNImputer
+from sklearn.decomposition import PCA
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+
 
 # External libraries
 from module_preprocessing import PreprocessingPipeline
+from module_model import ModelEvaluation, ModelSubmission
 
 from module_path import train_data_path, test_data_path, train_data_new_path
 
@@ -125,7 +130,60 @@ class Dataset:
         print(train_standardized.head())
         print(test_standardized.head())
 
-        return train_standardized, test_standardized
+        return train_standardized, test_standardized, labels
+
+    def load_data_frame_pca(self, n_comp=5, targets=["adhd", "sex_f"]):
+    #datos estandarizados
+        df_train_std, df_test_std, labels = self.load_data_frame_standardized()
+    #-- PCA
+        pca = PCA(n_components=n_comp)
+        pca.fit(df_train_std)
+
+        train_pca = pca.transform(df_train_std)
+        test_pca = pca.transform(df_test_std)
+
+    #Forma PCA
+        print(f"Forma de los datos de entrenamiento después de PCA: {train_pca.shape}")
+        print(f"Forma de los datos de prueba después de PCA: {test_pca.shape}")
+    #ratio
+        explained_variance_ratio = pca.explained_variance_ratio_
+        print(f"\nRatio de varianza explicada por cada componente principal: {explained_variance_ratio}")
+        print(f"Varianza total explicada por los {n_comp} componentes: {sum(explained_variance_ratio):.4f}")
+
+    #Evaluacion modelo
+    # usando Logistic Regression
+        ev_pca_adhd = ModelEvaluation(X=train_pca, y=labels[targets[0]], tag='pca_adhd')
+        ev_pca_adhd.evaluate_model(LogisticRegression(solver='lbfgs', max_iter=5000))
+
+        ev_pca_sex_f = ModelEvaluation(X=train_pca, y=labels[targets[1]], tag='pca_sex_f')
+        ev_pca_sex_f.evaluate_model(LogisticRegression(solver='lbfgs', max_iter=5000))
+
+        # Predicciones con PCA y Logistic Regression
+        sub_pca = ModelSubmission(X=test_pca, version=1, threshold=0.5, adhd_tag="pca_adhd", sex_f_tag="pca_sex_f")
+        sub_pca.to_submission(output_name='submission_pca.csv')
+
+        # Evaluación usando RandomForest
+        rf_pca_adhd = ModelEvaluation(X=train_pca, y=labels[targets[0]], tag='rf_pca_adhd')
+        rf_pca_adhd.evaluate_model(RandomForestClassifier(
+            n_estimators=1000,
+            criterion="gini",
+            max_depth=10,
+            random_state=42,
+            bootstrap=True,
+        ))
+
+        rf_pca_sex_f = ModelEvaluation(X=train_pca, y=labels[targets[1]], tag='rf_pca_sex_f')
+        rf_pca_sex_f.evaluate_model(RandomForestClassifier(
+            n_estimators=100,
+            criterion="gini",
+            max_depth=10,
+            random_state=42,
+            bootstrap=True,
+        ))
+        # Predicciones con PCA y RandomForest
+        sub_rf_pca = ModelSubmission(X=test_pca, version=1, threshold=0.5, adhd_tag="rf_pca_adhd", sex_f_tag="rf_pca_sex_f")
+        sub_rf_pca.to_submission(output_name='submission_rf_pca.csv')
+
     
     def load_relevant_data(self, threshold=0.1):
       '''Elimina variables que no correlacionan bien con el resultado. threshold = valor de correlación mínimo a tomar en cuenta'''
