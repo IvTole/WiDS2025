@@ -43,14 +43,41 @@ COL_BARRATT_BARRATT_P2_OCC = "Barratt_Barratt_P2_Occ"
 
 class Dataset:
 
-    def __init__(self, num_samples: int = None, random_seed: int = 42):
+    def __init__(self,
+                 num_samples: int = None,
+                 random_seed: int = 42,
+                 data_imputed: bool = False, 
+                 data_standarized: bool = False, 
+                 relevant_data: bool = False):
+                 
         """
         :param num_samples: the number of samples to draw from the data frame; if None, use all samples
         :param random_seed: the random seed to use when sampling data points
+        :param data_imputed: True si se desea imputar datos.
+        :param data_standarized: True si se desea standarizar datos.
+        :param relevant_data: True si se desea eliminar columnas no relevantes.
         """
 
         self.num_samples = num_samples
         self.random_seed = random_seed
+        self.data_imputed = data_imputed
+        self.data_standarized = data_standarized
+        self.relevant_data = relevant_data
+        
+    def process(self) -> pd.DataFrame:
+        train_new_combined, test_combined, labels = self.load_data_frame()
+        
+        if self.data_imputed:
+            train_new_combined, test_combined, labels = self.load_data_frame_imputed(train_new_combined, test_combined, labels)
+
+        if self.data_standarized:
+            train_new_combined, test_combined, labels = self.load_data_frame_standardized(train_new_combined, test_combined, labels)
+
+        if self.relevant_data:
+            train_new_combined, test_combined, labels = self.load_relevant_data(train_new_combined, test_combined, labels)
+        
+        return train_new_combined, test_combined, labels
+
     
     def load_data_frame(self) -> pd.DataFrame:
         """
@@ -90,8 +117,8 @@ class Dataset:
 
         return train_new_combined, test_combined, labels
     
-    def load_data_frame_imputed(self):
-        train_combined, test_combined, labels = self.load_data_frame()
+    def load_data_frame_imputed(self, train_combined, test_combined, labels):
+        #train_combined, test_combined, labels = self.load_data_frame()
 
         impute_train = Imputer(df=train_combined)
         impute_test = Imputer(df=test_combined)
@@ -103,8 +130,8 @@ class Dataset:
 
         return train_combined_imputed, test_combined_imputed, labels
     
-    def load_data_frame_standardized(self):
-        train_data, test_data, labels = self.load_data_frame_imputed()
+    def load_data_frame_standardized(self, train_data, test_data, labels):
+        #train_data, test_data, labels = self.load_data_frame_imputed()
 
         # Inicializar preprocesador
         preprocessor = Preprocessor(method="standard")
@@ -125,11 +152,11 @@ class Dataset:
         print(train_standardized.head())
         print(test_standardized.head())
 
-        return train_standardized, test_standardized
+        return train_standardized, test_standardized, labels
     
-    def load_relevant_data(self, threshold=0.1):
+    def load_relevant_data(self, train_data, test_data, labels, threshold=0.1):
       '''Elimina variables que no correlacionan bien con el resultado. threshold = valor de correlación mínimo a tomar en cuenta'''
-      train_data, test_data, labels = self.load_data_frame()
+      #train_data, test_data, labels = self.load_data_frame()
 
       # Verifica que labels sea un DataFrame con 2 columnas
       if not isinstance(labels, pd.DataFrame) or labels.shape[1] != 2:
@@ -157,6 +184,7 @@ class Dataset:
           print(f" - {col} ({corr_vals})")
 
       return train_filtered, test_filtered, labels
+    
 
 class Imputer():
 

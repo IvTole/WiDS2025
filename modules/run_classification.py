@@ -25,16 +25,18 @@ def main():
     print("Start date & time : ", start_datetime)
 
     # create a Dataset object
-    df = Dataset()
+    df = Dataset(data_imputed = True, 
+                 data_standarized = True, 
+                 relevant_data = False)
 
     # train dataframe, test dataframe, y targets dataframe
-    df_train, df_test, labels = df.load_data_frame_imputed()
+    df_train, df_test, labels = df.process()
 
     #Elimina columnas que no tienen una buena correlación con el resultado
-    df_train_select, df_test_select, labels = df.load_relevant_data()
+    #df_train_select, df_test_select, labels = df.load_relevant_data() #No se hace imputed, no estan ligados.
 
     # Genera train dataframe, test dataframe, versión estandarizada para utilizar en futuros modelos 
-    df_train_std, df_test_std = df.load_data_frame_standardized()
+    #df_train_std, df_test_std = df.load_data_frame_standardized()
 
     # define array of target variables for the model
     targets = ['ADHD_Outcome',  'Sex_F']
