@@ -126,7 +126,37 @@ class Dataset:
         print(test_standardized.head())
 
         return train_standardized, test_standardized
+    
+    def load_relevant_data(self, threshold=0.1):
+      '''Elimina variables que no correlacionan bien con el resultado. threshold = valor de correlación mínimo a tomar en cuenta'''
+      train_data, test_data, labels = self.load_data_frame()
 
+      # Verifica que labels sea un DataFrame con 2 columnas
+      if not isinstance(labels, pd.DataFrame) or labels.shape[1] != 2:
+          raise ValueError("Se esperaban exactamente dos columnas en las etiquetas.")
+
+      # Calcular correlaciones absolutas con cada etiqueta
+      correlations = pd.DataFrame({
+          col: train_data.corrwith(labels[col]).abs()
+          for col in labels.columns
+      })
+
+      # Conservar solo columnas que cumplan el umbral en ambas correlaciones
+      #mask = (correlations >= threshold).all(axis=1)
+      mask = (correlations >= threshold).any(axis=1)
+
+      relevant_cols = correlations[mask].index
+      removed_cols = correlations[~mask]
+
+      train_filtered = train_data[relevant_cols]
+      test_filtered = test_data[relevant_cols]
+
+      print("Eliminated columns for low correlation on both results:")
+      for col in removed_cols.index:
+          corr_vals = ", ".join(f"{col_name}: {removed_cols.loc[col, col_name]:.4f}" for col_name in removed_cols.columns)
+          print(f" - {col} ({corr_vals})")
+
+      return train_filtered, test_filtered, labels
 
 class Imputer():
 
