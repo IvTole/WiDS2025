@@ -7,7 +7,7 @@ import functools
 
 # Sklearn
 import sklearn.metrics as metrics
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report, confusion_matrix, ConfusionMatrixDisplay
 
 # XGBoost
@@ -61,6 +61,7 @@ class ModelEvaluation:
         
         self.tag = tag
 
+
     @mlflow_logger
     def evaluate_model(self, model) -> float:
         """
@@ -92,6 +93,35 @@ class ModelEvaluation:
         #print("\n Clasification report:\n")
         #print(classification_report(self.y_test, y_pred))
 
+    def evaluate_with_gridsearch(self, base_model, param_grid, scoring='f1', cv=5, save_best_params_path=None):
+        """
+        Aplica GridSearchCV y evalúa el mejor modelo encontrado.
+        :param base_model: el modelo base
+        :param param_grid: diccionario con los hiperparámetros a probar
+        :param scoring: métrica de evaluación para el grid search
+        :param cv: número de folds en la validación cruzada
+        :return: el mejor modelo y su f1_score
+        """
+        print(f"Ejecutando GridSearchCV para {type(base_model).__name__} - {self.tag}")
+    
+        grid_search = GridSearchCV(
+            estimator=base_model,
+            param_grid=param_grid,
+            cv=cv,
+            scoring=scoring
+        )
+    
+        grid_search.fit(self.X_train, self.y_train)
+        best_model = grid_search.best_estimator_
+        best_params = grid_search.best_params_
+
+        print(f"\nMejores hiperparámetros para {self.tag}:")
+        for param, val in best_params.items():
+            print(f"  {param}: {val}")
+
+        score = self.evaluate_model(best_model)
+    
+        return best_model, score
 
         # log parameters and metrics in MLFlow
         mlflow.log_param("Model Type", type(model).__name__ + '_' + self.tag)

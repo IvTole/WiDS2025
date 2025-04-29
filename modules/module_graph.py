@@ -13,12 +13,12 @@ from module_path import plots_data_path
 #Sets the path to save the plots
 plots_path = plots_data_path()
 
-def graph_tree (model):
+def graph_tree (model, tag):
     # Plots a tree from the random forest
     plt.figure(figsize=(20,10))
     plot_tree(model.estimators_[0], filled=True) 
-    plt.title("Individual Tree from the Random Forest")
-    plt.savefig(os.path.join(plots_path,'decision_tree.png'))
+    plt.title(f"Random_Forest_{tag}")
+    plt.savefig(os.path.join(plots_path,f"Random_forest_{tag}.png"))
     #mlflow.log_artifact(os.path.join(plots_path,'decision_tree.png'))
     #plt.show()
 
