@@ -16,7 +16,7 @@ from module_path import test_data_path, train_data_path, plots_data_path
 from module_data import Dataset
 from module_graph import graph_tree
 from module_model import ModelEvaluation, ModelEvaluationXG, ModelSubmission
-from model_params2 import Models
+from modules.module_ml import Models
 
 
 
@@ -38,14 +38,14 @@ def main():
 
     # Create the hiperparameters grid for the GridSearchCV
     param_grid_lr = {
-    'C': [0.1, 1.0, 10.0],
+    'C': [0.1, 0.2, 0.3, 0.4, 1.0, 2.0, 3.0, 4.0, 10.0],
     'solver': ['lbfgs', 'liblinear'],
     }
     
     param_grid_rf = {
     'n_estimators': [100, 500, 1000],
-    'max_depth': [3, 5, 10, 20],
-    'bootstrap': [True, False],
+    'max_depth': [3, 5, 10],
+    'bootstrap': [True],
     'criterion': ['gini', 'entropy']
     }
 
@@ -58,7 +58,7 @@ def main():
                   )
     
     #Evaluate model with Logistic Regression (adhd, sex_f).
-    lr_adhd, lr_sex_f = model.log_regression(gridsearch = False,
+    lr_adhd, lr_sex_f = model.log_regression(gridsearch = True,
                                                 param_grid = param_grid_lr,
                                                 scoring = 'f1',
                                                 cv = 5,
@@ -71,7 +71,7 @@ def main():
     sub.to_submission(output_name='submission.csv')
 
     #Evaluate model with Random Forest (adhd, sex_f).
-    rf_adhd, rf_sex_f = model.random_forest(gridsearch = False,
+    rf_adhd, rf_sex_f = model.random_forest(gridsearch = True,
                                                param_grid = param_grid_rf,
                                                scoring = 'f1',
                                                cv = 5,
