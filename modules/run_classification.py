@@ -16,6 +16,7 @@ from module_path import test_data_path, train_data_path, plots_data_path
 from module_data import Dataset
 from module_graph import graph_tree
 from module_model import ModelEvaluation, ModelEvaluationXG, ModelSubmission
+from model_params2 import Models
 
 
 
@@ -31,12 +32,6 @@ def main():
 
     # train dataframe, test dataframe, y targets dataframe
     df_train, df_test, labels = df.process()
-
-    #Elimina columnas que no tienen una buena correlación con el resultado
-    #df_train_select, df_test_select, labels = df.load_relevant_data() #No se hace imputed, no estan ligados.
-
-    # Genera train dataframe, test dataframe, versión estandarizada para utilizar en futuros modelos 
-    #df_train_std, df_test_std = df.load_data_frame_standardized()
 
     # define array of target variables for the model
     targets = ['ADHD_Outcome',  'Sex_F']
@@ -54,49 +49,42 @@ def main():
     'criterion': ['gini', 'entropy']
     }
 
-    iteraciones = 5000
-
-    scoring = 'f1'
-
-    # evaluate model Logistic Regression (adhd)
-    lr_adhd = ModelEvaluation(X=df_train, y=labels[targets[0]], tag='adhd')
-    best_model_lr_adhd, f1_lr = lr_adhd.evaluate_with_gridsearch(
-                                                                base_model=LogisticRegression(max_iter=5000),
-                                                                param_grid=param_grid_lr,
-                                                                scoring='f1'
-                                                                )
-
-    # evaluate model Logistic Regression (sex_f)
-    lr_sex_f = ModelEvaluation(X=df_train, y=labels[targets[1]], tag='sex_f')
-    best_model_lr_sex_f, f1_lr = lr_sex_f.evaluate_with_gridsearch(
-                                                                base_model=LogisticRegression(max_iter=5000),
-                                                                param_grid=param_grid_lr,
-                                                                scoring='f1'
-                                                                )
+    #Initialized evaluation models.
+    model = Models(X = df_train, 
+                  y1 = labels[targets[0]],
+                  y2 = labels[targets[1]], 
+                  tag1 = 'adhd',
+                  tag2 = 'sex_f', 
+                  )
+    
+    #Evaluate model with Logistic Regression (adhd, sex_f).
+    lr_adhd, lr_sex_f = model.log_regression(gridsearch = False,
+                                                param_grid = param_grid_lr,
+                                                scoring = 'f1',
+                                                cv = 5,
+                                           model_evaluation=True,
+                                                max_iter = 5000,
+                                                solver = 'lbfgs')
     
     # prediction with test dataset
     sub = ModelSubmission(X=df_test, version=1, threshold=0.5, adhd_tag="adhd", sex_f_tag="sex_f")
     sub.to_submission(output_name='submission.csv')
 
-    # Train and evaluate RandomForest for adhd
-    rf_adhd = ModelEvaluation(X=df_train, y=labels[targets[0]], tag='rf_adhd')
-    best_model_rf_adhd, f1_rf = rf_adhd.evaluate_with_gridsearch(
-                                                                base_model=RandomForestClassifier(random_state=42),
-                                                                param_grid=param_grid_rf,
-                                                                scoring='f1'
-                                                                )
-
-    # Train and evaluate RandomForest for sex_f
-    rf_sex_f = ModelEvaluation(X=df_train, y=labels[targets[1]], tag='rf_sex_f')
-    best_model_rf_sex_f, f1_rf = rf_sex_f.evaluate_with_gridsearch(
-                                                                base_model=RandomForestClassifier(random_state=42),
-                                                                param_grid=param_grid_rf,
-                                                                scoring='f1'
-                                                                )
-    
+    #Evaluate model with Random Forest (adhd, sex_f).
+    rf_adhd, rf_sex_f = model.random_forest(gridsearch = False,
+                                               param_grid = param_grid_rf,
+                                               scoring = 'f1',
+                                               cv = 5,
+                                           model_evaluation=True,
+                                               n_estimators = 100,
+                                               criterion = "gini",
+                                               max_depth = 10,
+                                               random_state = 42,
+                                               bootstrap = True)
+   
     # Plots a tree of the forest
-    graph_tree(best_model_rf_adhd, tag='rf_adhd')
-    graph_tree(best_model_rf_sex_f, tag='rf_sex_f')
+    graph_tree(rf_adhd, tag='rf_adhd')
+    graph_tree(rf_sex_f, tag='rf_sex_f')
 
     # prediction with test dataset
     sub = ModelSubmission(X=df_test, version=1, threshold=0.5, adhd_tag="rf_adhd", sex_f_tag="rf_sex_f")

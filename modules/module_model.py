@@ -62,7 +62,7 @@ class ModelEvaluation:
         cm = confusion_matrix(y_test, y_pred)
         print(f"\nConfusion matrix ({tag}):\n{cm}")
 
-        graph_confusion_matrix(cm, type(model).__name__, self.tag, labels=sorted(set(y_test)))
+        graph_confusion_matrix(cm, type(model).__name__, tag, labels=sorted(set(y_test)))
         #mlflow.log_artifact(graph_confusion_matrix)
 
         f1_score = metrics.f1_score(y_test, y_pred)
@@ -89,7 +89,8 @@ class ModelEvaluation:
                                  X_train: pd.DataFrame, 
                                  y_train: pd.Series, 
                                  base_model, 
-                                 param_grid, 
+                                 param_grid,
+                                 tag, 
                                  scoring='f1', 
                                  cv=5, 
                                  save_best_params_path=None):
@@ -101,7 +102,7 @@ class ModelEvaluation:
         :param cv: número de folds en la validación cruzada
         :return: el mejor modelo y su f1_score
         """
-        print(f"Ejecutando GridSearchCV para {type(base_model).__name__} - {self.tag}")
+        print(f"Ejecutando GridSearchCV para {type(base_model).__name__} - {tag}")
     
         grid_search = GridSearchCV(
                                     estimator=base_model,
@@ -114,11 +115,11 @@ class ModelEvaluation:
         best_model = grid_search.best_estimator_
         best_params = grid_search.best_params_
 
-        print(f"\nMejores hiperparámetros para {self.tag}:")
+        print(f"\nMejores hiperparámetros para {tag}:")
         for param, val in best_params.items():
             print(f"  {param}: {val}")
 
-        #score = self.evaluate_model(best_model)
+        #score = self.evaluate_model(best_model, X_train, y_train, X_test, y_test, tag)
     
         return best_model
     
