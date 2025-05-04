@@ -14,7 +14,7 @@ from sklearn.decomposition import PCA
 # External modules
 from module_path import test_data_path, train_data_path, plots_data_path
 from module_data import Dataset
-from module_graph import graph_tree
+from module_graph import graph_tree, graph_roc_curve
 from module_model import ModelEvaluation, ModelEvaluationXG, ModelSubmission
 
 

@@ -8,7 +8,7 @@ import functools
 # Sklearn
 import sklearn.metrics as metrics
 from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report, confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report, confusion_matrix, ConfusionMatrixDisplay, roc_curve, roc_auc_score
 
 # XGBoost
 from xgboost import XGBClassifier
@@ -20,7 +20,7 @@ from mlflow.models.signature import infer_signature
 
 # External modules
 from module_path import plots_data_path, mlruns_data_path, submission_data_path
-from module_graph import graph_confusion_matrix
+from module_graph import graph_confusion_matrix,graph_lr_coefficients,graph_roc_curve
 
 def mlflow_logger(func):
     """Decorator to automatically start and close an mlflow run"""
@@ -90,6 +90,12 @@ class ModelEvaluation:
         rec = recall_score(self.y_test, y_pred)
         print(f"Recall    : {rec:.2f}")
 
+        auc = roc_auc_score(self.y_test, y_pred[:, 1]) # Calcular AUC
+        print(f"AUC           : {auc:.2f}") #se agrego el calculo de auc en evaluate  model
+
+        fpr, tpr, thresholds = roc_curve(self.y_test, y_pred[:, 1]) # Calcular ROC
+        graph_roc_curve(fpr, tpr, auc, type(model)._name_, self.tag) # Llamar a la función para graficar
+
         #print("\n Clasification report:\n")
         #print(classification_report(self.y_test, y_pred))
 
@@ -131,9 +137,23 @@ class ModelEvaluation:
         mlflow.log_metric("accuracy", acc)
         mlflow.log_metric("precision", prec)
         mlflow.log_metric("recall", rec)
+        mlflow.log_metric("auc", auc) # Registrar AUC
+        mlflow.log_metric("fpr", list(fpr))  # Registrar ROC
+        mlflow.log_metric("tpr", list(tpr))
+        mlflow.log_metric("thresholds", list(thresholds))
         signature = infer_signature(self.X_train, model.predict(self.X_train))
         mlflow.sklearn.log_model(model, "model", signature=signature)
 
+        # Visualizar los coeficientes para Regresión Logística
+        from sklearn.linear_model import LogisticRegression
+        if isinstance(model, LogisticRegression):
+            try:
+                coefficients = model.coef_[0]
+                feature_names = self.X_train.columns
+                graph_lr_coefficients(coefficients, feature_names, model_name, self.tag)
+            except Exception as e:
+                print(f"Error al graficar los coeficientes de LR: {e}")
+                
         #Update model name in MLFlow.
         run_label = f"{type(model).__name__}_{self.tag}_f1_score={f1_score:.5f}_acc={acc:.5f}"
         mlflow.set_tag("mlflow.runName", run_label)
