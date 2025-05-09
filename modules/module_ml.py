@@ -82,31 +82,31 @@ class Models():
 
         for y, tag in self.y_pairs:
             X_train, X_test, y_train, y_test = train_test_split(
-                self.X, y,
-                random_state=self.random_state,
-                test_size=self.test_size,
-                shuffle=self.shuffle
-            )
+                                                                self.X, y,
+                                                                random_state=self.random_state,
+                                                                test_size=self.test_size,
+                                                                shuffle=self.shuffle
+                                                               )
 
             if gridsearch:
                 base_model = model()
                 trained_model = self.evaluator.evaluate_with_gridsearch(
-                    X_train=X_train,
-                    y_train=y_train,
-                    base_model=base_model,
-                    param_grid=param_grid,
-                    tag=tag,
-                    scoring=scoring,
-                    cv=cv
-                )
+                                                                        X_train=X_train,
+                                                                        y_train=y_train,
+                                                                        base_model=base_model,
+                                                                        param_grid=param_grid,
+                                                                        tag=tag,
+                                                                        scoring=scoring,
+                                                                        cv=cv
+                                                                       )
             else:
                 trained_model = model(
-                    n_estimators=n_estimators,
-                    criterion=criterion,
-                    max_depth=max_depth,
-                    random_state=random_state,
-                    bootstrap=bootstrap
-                )
+                                        n_estimators=n_estimators,
+                                        criterion=criterion,
+                                        max_depth=max_depth,
+                                        random_state=random_state,
+                                        bootstrap=bootstrap
+                                    )
                 trained_model.fit(X_train, y_train)
 
             if model_evaluation:
