@@ -8,6 +8,9 @@ from module_model import ModelEvaluation, mlflow_logger
 
 
 class Models():
+    '''
+    Clase que almacena en cada uno de sus métodos los distintos modelos aplicados al proyecto.
+    '''
     def __init__(self,
                  X: pd.DataFrame, 
                  y1: pd.Series, y2: pd.Series, 
@@ -21,6 +24,15 @@ class Models():
         self.shuffle = shuffle
         self.random_state = random_state
         self.evaluator = ModelEvaluation()
+        '''
+        Engloba aquellos parametros que comparten en común los distintos modelos.
+        : param: X= es el dataframe que contiene los datos a analizar.
+        : param: y1 y y2= son los resultados para comparar nuetro modelo (es una lista de tuplas). 
+        : param: tag1 y tag2= Son las etiquetas que le daremos a nuestras predicciones.
+        : param: test_size= Tamaño de la muestra que será usada para el split (30% por defatult).
+        : param: shuffle= Si deseamos barajear los datos antes del split (True por default).
+        : param:random_state= Semilla aleatoria (asignamos un valor por default).
+        '''
 
     def log_regression(self,
                        model: type = LogisticRegression,
@@ -31,7 +43,18 @@ class Models():
                        model_evaluation: bool = False,
                             max_iter: int = 5000,
                             solver: str = 'lbfgs'):
-
+        '''
+        Método que contiene al modelo de regresión logistica.
+        : param: model= Se llama al tipo de modelo que representa el método en este caso LogisticRegression.
+        : param: gridsearch= Valor booleano para activar gridsearchcv.
+        : param: param_grid= Diccionario que contiene los valores del gridsearch se ejecturan en una variable aparte en el código.
+        : param: scoring= Es el valor que tomará gridseach para hacer las comparativas entre los mejores modelos (f1 por default).
+        : param: cv= Número de folds para la validación cruzada (5 por default).
+        : param: model_evaluation= Valor booleano para activar la evaluación del modelo.
+        : param: max_iter= Número máximo de interaciones si se ejecutar la evaluación del modelo.
+        : param: solver: Tipo de solver que usará el modelo para su evaluación.
+        : return: Nos dará una tupla con los valores uno para cada una de las dos etiquetas utilizadas.
+        '''
         results = []
 
         for y, tag in self.y_pairs:
@@ -77,6 +100,21 @@ class Models():
                     max_depth: int = 10,
                     random_state: int = 42,
                     bootstrap: bool = True):
+        '''
+        Método que contiene al modelo de regresión logistica.
+        : param: model= Se llama al tipo de modelo que representa el método en este caso RandomForestClassifier.
+        : param: gridsearch= Valor booleano para activar gridsearchcv.
+        : param: param_grid= Diccionario que contiene los valores del gridsearch se ejecturan en una variable aparte en el código.
+        : param: scoring= Es el valor que tomará gridseach para hacer las comparativas entre los mejores modelos (f1 por default).
+        : param: cv= Número de folds para la validación cruzada (5 por default).
+        : param: model_evaluation= Valor booleano para activar la evaluación del modelo.
+        : param: n_estimatos= Número total de arboles que conformarán al bosque (1000 por default).  
+        : param: criterion= Criterio a usar para realizar los arboles (gini, entropia).
+        : param: max_depth= Número que conforma la profundidad del árbol (10 por default).
+        : param: random_state: Semilla aleatoria (42 por default).
+        : param: bootstrap: Muestreo aleatorio por remplazo (activado por default).
+        : return: 
+        '''
 
         results = []
 

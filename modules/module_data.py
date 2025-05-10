@@ -63,17 +63,25 @@ class Dataset:
         self.data_imputed = data_imputed
         self.data_standarized = data_standarized
         self.relevant_data = relevant_data
-    
+
         
     def process(self) -> pd.DataFrame:
+        '''
+        Método que funge como controlador de la clase Dataset.
+        : retun: Nos arroja tres valores correspondientes al dataset de entrenamiento el de prueba y las etiquetas de los datos a analizar.
+        '''
+        #Se carga la información sin procesar.
         train_new_combined, test_combined, labels = self.load_data_frame()
         
+        #Ejecuta la imputación de los datos.
         if self.data_imputed:
             train_new_combined, test_combined, labels = self.load_data_frame_imputed(train_new_combined, test_combined, labels)
 
+        #Ejecuta la estandarización de la información.
         if self.data_standarized:
             train_new_combined, test_combined, labels = self.load_data_frame_standardized(train_new_combined, test_combined, labels)
 
+        #Deja la informción relevante.
         if self.relevant_data:
             train_new_combined, test_combined, labels = self.load_relevant_data(train_new_combined, test_combined, labels)
         
