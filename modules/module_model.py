@@ -45,55 +45,55 @@ class ModelEvaluation:
     """
     Supports the evaluation of classification models (multinomial), collecting the results.
     """
-
-    def __init__(self, X: pd.DataFrame, y: pd.Series, tag: str, test_size: float = 0.3, shuffle: bool = True, random_state: int = 42):
-        """
-        :param X: the inputs
-        :param y: the prediction targets
-        :param test_size: the fraction of the data to reserve for testing
-        :param shuffle: whether to shuffle the data prior to splitting
-        :param random_state: the random seed
-        :param tag: target name for logging
-        """
-
-        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X, y,
-            random_state=random_state, test_size=test_size, shuffle=shuffle)
-        
-        self.tag = tag
-
+    def __init__(self):
+        pass        
 
     @mlflow_logger
-    def evaluate_model(self, model) -> float:
+    def evaluate_model(self, model, X_train, y_train, X_test, y_test, tag) -> float:
         """
         :param model: the model to evaluate
         :return: the f1-score
         """
-        model.fit(self.X_train, self.y_train)
-        y_pred = model.predict(self.X_test)
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_test)
 
-        print(f"\nModel evaluation: {type(model).__name__} - {self.tag}")
+        print(f"\nModel evaluation: {type(model).__name__} - {tag}")
 
-        cm = confusion_matrix(self.y_test, y_pred)
-        print(f"\nConfusion matrix ({self.tag}):\n{cm}")
+        cm = confusion_matrix(y_test, y_pred)
+        print(f"\nConfusion matrix ({tag}):\n{cm}")
 
-        graph_confusion_matrix(cm, type(model).__name__, self.tag, labels=sorted(set(self.y_test)))
+        graph_confusion_matrix(cm, type(model).__name__, tag, labels=sorted(set(y_test)))
+        #mlflow.log_artifact(graph_confusion_matrix)
 
-        f1_score = metrics.f1_score(self.y_test, y_pred)
+        f1_score = metrics.f1_score(y_test, y_pred)
+        mlflow.log_metric("f1_score", f1_score)
         print(f"\nF1_score  : {f1_score:.2f}")
 
-        acc = accuracy_score(self.y_test, y_pred)
+        acc = accuracy_score(y_test, y_pred)
+        mlflow.log_metric("acc", acc)
         print(f"Accuracy  : {acc:.2f}")
 
-        prec = precision_score(self.y_test, y_pred)
+        prec = precision_score(y_test, y_pred)
+        mlflow.log_metric("prec", prec)
         print(f"Precision : {prec:.2f}")
 
-        rec = recall_score(self.y_test, y_pred)
+        rec = recall_score(y_test, y_pred)
+        mlflow.log_metric("recall", rec)
         print(f"Recall    : {rec:.2f}")
 
-        #print("\n Clasification report:\n")
-        #print(classification_report(self.y_test, y_pred))
+        #Update model name in MLFlow.
+        run_label = f"{type(model).__name__}_{tag}_f1_score={f1_score:.5f}"
+        mlflow.set_tag("mlflow.runName", run_label)
 
-    def evaluate_with_gridsearch(self, base_model, param_grid, scoring='f1', cv=5, save_best_params_path=None):
+    def evaluate_with_gridsearch(self, 
+                                 X_train: pd.DataFrame, 
+                                 y_train: pd.Series, 
+                                 base_model, 
+                                 param_grid,
+                                 tag, 
+                                 scoring='f1', 
+                                 cv=5, 
+                                 save_best_params_path=None):
         """
         Aplica GridSearchCV y evalúa el mejor modelo encontrado.
         :param base_model: el modelo base
@@ -102,43 +102,26 @@ class ModelEvaluation:
         :param cv: número de folds en la validación cruzada
         :return: el mejor modelo y su f1_score
         """
-        print(f"Ejecutando GridSearchCV para {type(base_model).__name__} - {self.tag}")
+        print(f"Ejecutando GridSearchCV para {type(base_model).__name__} - {tag}")
     
         grid_search = GridSearchCV(
-            estimator=base_model,
-            param_grid=param_grid,
-            cv=cv,
-            scoring=scoring
-        )
+                                    estimator=base_model,
+                                    param_grid=param_grid,
+                                    cv=cv,
+                                    scoring=scoring
+                                  )
     
-        grid_search.fit(self.X_train, self.y_train)
+        grid_search.fit(X_train, y_train)
         best_model = grid_search.best_estimator_
         best_params = grid_search.best_params_
 
-        print(f"\nMejores hiperparámetros para {self.tag}:")
+        print(f"\nMejores hiperparámetros para {tag}:")
         for param, val in best_params.items():
             print(f"  {param}: {val}")
 
-        score = self.evaluate_model(best_model)
+        #score = self.evaluate_model(best_model, X_train, y_train, X_test, y_test, tag)
     
-        return best_model, score
-
-        # log parameters and metrics in MLFlow
-        mlflow.log_param("Model Type", type(model).__name__ + '_' + self.tag)
-        for hyperparameter, value in model.get_params().items():
-            mlflow.log_param(hyperparameter, value)
-        mlflow.log_metric("f1_score", f1_score)
-        mlflow.log_metric("accuracy", acc)
-        mlflow.log_metric("precision", prec)
-        mlflow.log_metric("recall", rec)
-        signature = infer_signature(self.X_train, model.predict(self.X_train))
-        mlflow.sklearn.log_model(model, "model", signature=signature)
-
-        #Update model name in MLFlow.
-        run_label = f"{type(model).__name__}_{self.tag}_f1_score={f1_score:.5f}_acc={acc:.5f}"
-        mlflow.set_tag("mlflow.runName", run_label)
-
-        return f1_score
+        return best_model
     
 class ModelEvaluationXG:
     """
